@@ -8,7 +8,7 @@ spring:
   kafka:
     consumer:
       # Kafka IP address and port
-      bootstrap-servers: 192.168.1.226:9092
+      bootstrap-servers: localhost:9092
       group-id: backend-consumer-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -29,4 +29,10 @@ spring:
       concurrency: 3
   data:
     mongodb:
-      uri: mongodb://root:secret@192.168.1.226:27017/ouvadb
+      # uri: mongodb://root:secret@localhost:27017/ouvadb?ssl=false
+      authentication-database: admin
+      host: localhost
+      port: 27017
+      database: ouvadb
+      username: root
+      password: secret

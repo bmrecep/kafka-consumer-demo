@@ -8,9 +8,11 @@ services:
     ports:
       - "27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME: "root"
-      - MONGO_INITDB_ROOT_PASSWORD: "secret"
-      - MONGO_INITDB_DATABASE: "ouvadb"
+      MONGO_INITDB_ROOT_USERNAME: "root"
+      MONGO_INITDB_ROOT_PASSWORD: "secret"
+      MONGO_INITDB_DATABASE: "ouvadb"
+    command:
+      --sslMode=disabled
 
   zookeeper:
     image: confluentinc/cp-zookeeper:6.0.0
@@ -20,8 +22,8 @@ services:
     ports:
       - "2181:2181"
     environment:
-      - ZOOKEEPER_CLIENT_PORT: 2181
-      - ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_CLIENT_PORT: "2181"
+      ZOOKEEPER_TICK_TIME: 2000
 
   broker:
     image: confluentinc/cp-kafka:6.0.0
@@ -34,46 +36,40 @@ services:
       - "9092:9092"
       - "9101:9101"
     environment:
-      - KAFKA_BROKER_ID: 1
-      - KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      - KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
-      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      - KAFKA_JMX_PORT: 9101
-      - KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_BROKER_ID: "1"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
 
   kafdrop:
     image: obsidiandynamics/kafdrop:3.26.0
+    hostname: kafdrop
+    container_name: kafdrop
     depends_on:
       - broker
     ports:
       - "9000:9000"
     environment:
-      - KAFKA_BROKERCONNECT: "broker:29092"
-      - JVM_OPTS: "-Xms32M -Xmx100M"
-      - SERVER_SERVLET_CONTEXTPATH: "/"
+      KAFKA_BROKERCONNECT: broker:29092
+      JVM_OPTS: "-Xms32M -Xmx100M"
+      SERVER_SERVLET_CONTEXTPATH: "/"
 
   mongo-express:
     image: "mongo-express:latest"
+    hostname: mongo-express
+    container_name: mongo-express
     depends_on:
       - mongo
     ports:
       - "8081:8081"
     environment:
-      - ME_CONFIG_MONGODB_SERVER: "mongo"
-      - ME_CONFIG_MONGODB_PORT: "27017"
-      - ME_CONFIG_MONGODB_ADMINUSERNAME: "root"
-      - ME_CONFIG_MONGODB_ADMINPASSWORD: "secret"
-
-  kafka-consumer:
-    build: kafka-consumer/
-    image: kafka-consumer
-    depends_on:
-      - mongo
-      - broker
-    restart: always
-    ports:
-    - 8080:8080
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: "27017"
+      ME_CONFIG_MONGODB_ADMINUSERNAME: "root"
+      ME_CONFIG_MONGODB_ADMINPASSWORD: "secret"

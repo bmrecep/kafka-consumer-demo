@@ -24,9 +24,9 @@ public class PatientController {
   @GetMapping("/{roomId}/heartbeat")
   @Payload
   public List<HeartbeatDTO> find(@PathVariable("roomId") String roomId,
-    @RequestParam("threshold") Optional<Integer> threshold,
-    @RequestParam(value = "durationBegin") Optional<LocalTime> durationBegin,
-    @RequestParam(value = "durationEnd") Optional<LocalTime> durationEnd) {
+    @RequestParam(value = "threshold", required = false) Optional<Integer> threshold,
+    @RequestParam(value = "durationBegin", required = false) Optional<LocalTime> durationBegin,
+    @RequestParam(value = "durationEnd", required = false) Optional<LocalTime> durationEnd) {
     return service.findBy(roomId, threshold, durationBegin, durationEnd);
   }
 
