@@ -1,0 +1,32 @@
+server:
+  servlet:
+    context-path: '/api'
+  port: 8080
+spring:
+  application:
+    name: 'kafka-consumer'
+  kafka:
+    consumer:
+      # Kafka IP address and port
+      bootstrap-servers: 192.168.1.226:9092
+      group-id: backend-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      topic: heartbeat
+      properties:
+        # Spring generates appropriate JSON deserializer mappings according to these definitions
+        spring:
+          json:
+            trusted:
+              packages: '*'
+            value:
+              default:
+                type: 'com.ouva.demo.dto.HeartbeatKafkaRecord'
+    listener:
+      # Use 'concurrency' number of consumers to handle incoming messages.
+      # (Number of partitions needs to be greater or equals to this value to make it work!)
+      concurrency: 3
+  data:
+    mongodb:
+      uri: mongodb://root:secret@192.168.1.226:27017/ouvadb
