@@ -40,9 +40,16 @@ curl -X GET "http://localhost:8080/api/{roomId}/heartbeat?threshold={threshold}&
 
 You can also test the application by using the RESTful API documentation page.
 
+## Configuration
+
+The backend application can be configured in the file [application.yml](./kafka-consumer/src/main/resources/application.yml).
+
+## Coding Style
+
+[Google coding style](./kafka-consumer/google-coding-style.xml) is used to format code. Additionally, [Udacity Git Commit Style](https://udacity.github.io/git-styleguide/) is used.
+
 ## TODO
 
-* We should make use of partitions to load-balance (some field such as roomId might be used as a key provider)
+* Make use of partitions to load-balance (some field such as roomId might be used as a key provider)
 * docker-compose configuration with Kafka clusters
 * Integration tests
-* 
