@@ -29,7 +29,6 @@ spring:
       concurrency: 3
   data:
     mongodb:
-      # uri: mongodb://root:secret@localhost:27017/ouvadb?ssl=false
       authentication-database: admin
       host: localhost
       port: 27017
