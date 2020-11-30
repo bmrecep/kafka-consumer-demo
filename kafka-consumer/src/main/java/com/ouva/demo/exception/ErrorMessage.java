@@ -1,4 +1,4 @@
-package com.ouva.demo.config.exception;
+package com.ouva.demo.exception;
 
 import java.io.Serializable;
 import java.util.Date;

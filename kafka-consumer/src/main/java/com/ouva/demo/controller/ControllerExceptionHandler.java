@@ -1,6 +1,6 @@
 package com.ouva.demo.controller;
 
-import com.ouva.demo.config.exception.ErrorMessage;
+import com.ouva.demo.exception.ErrorMessage;
 import java.util.Date;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
