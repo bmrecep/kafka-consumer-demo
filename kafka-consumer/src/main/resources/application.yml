@@ -8,7 +8,7 @@ spring:
   kafka:
     consumer:
       # Kafka IP address and port
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: broker:9092
       group-id: backend-consumer-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -31,8 +31,15 @@ spring:
   data:
     mongodb:
       authentication-database: admin
-      host: localhost
+      host: mongo
       port: 27017
       database: ouvadb
       username: root
       password: secret
+  jackson:
+    serialization:
+      # To prevent serializing as array
+      write_dates_as_timestamps: false
+logging:
+  level:
+    root: ERROR
