@@ -24,6 +24,9 @@ public class HeartbeatConsumerConfig {
   @Value("${spring.kafka.listener.concurrency}")
   private Integer concurrency;
 
+  @Value("${spring.kafka.consumer.partition:1}")
+  private Integer partition;
+
   /**
    * The ConsumerFactory implementation to produce new Consumer instances for provided Map configs and optional
    * Deserializers on each ConsumerFactory.createConsumer() invocation.
@@ -39,7 +42,7 @@ public class HeartbeatConsumerConfig {
   @Bean
   public NewTopic compactTopicExample() {
     return TopicBuilder.name(topic)
-      .partitions(concurrency)
+      .partitions(partition)
       .compact()
       .build();
   }

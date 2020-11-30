@@ -14,6 +14,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       topic: heartbeat
+      partition: 3
       properties:
         # Spring generates appropriate JSON deserializer mappings according to these definitions
         spring:
