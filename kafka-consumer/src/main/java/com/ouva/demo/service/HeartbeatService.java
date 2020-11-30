@@ -2,11 +2,11 @@ package com.ouva.demo.service;
 
 import com.ouva.demo.dto.HeartbeatDTO;
 import com.ouva.demo.dto.HeartbeatKafkaRecord;
+import com.ouva.demo.dto.validator.BaseValidator;
 import com.ouva.demo.mapper.Mapper;
 import com.ouva.demo.model.Heartbeat;
 import com.ouva.demo.repository.HeartbeatRepository;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,17 +27,17 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class HeartbeatService {
 
-  private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("H:mm:ss.SSSSSS");
-
   private final HeartbeatRepository repository;
   private final MongoTemplate template;
   private final Mapper mapper;
+  private final BaseValidator validator;
 
   @KafkaHandler
   public void heartbeatReceived(HeartbeatKafkaRecord kafkaRecord) {
     if (log.isDebugEnabled()) {
       log.debug("Received heartbeat message: " + kafkaRecord.toString());
     }
+    validator.validate(kafkaRecord);
     repository.save(mapper.toEntity(kafkaRecord));
   }
 
@@ -69,8 +69,8 @@ public class HeartbeatService {
   }
 
   private boolean isFirstOccurrence(int i, List<Heartbeat> heartbeats, Optional<Integer> threshold) {
-    return heartbeats.get(i).getRedSignal() > threshold.get()
-      && (i == 0 || (i > 0 && heartbeats.get(i - 1).getRedSignal() <= threshold.get()));
+    return heartbeats.get(i).getRedSignal() >= threshold.get()
+      && (i == 0 || (heartbeats.get(i - 1).getRedSignal() < threshold.get()));
   }
 
   /**
@@ -85,11 +85,14 @@ public class HeartbeatService {
     Query query = new Query();
     Criteria criteria = Criteria.where("roomId").is(roomId);
     if (durationBegin.isPresent()) {
-      Criteria durationCriteria = Criteria.where("time").gte(durationBegin.get());
       if (durationEnd.isPresent()) {
-        durationCriteria.and("time").lt(durationEnd.get());
+        criteria = criteria.andOperator(
+          Criteria.where("time").lt(durationEnd.get()),
+          Criteria.where("time").gte(durationBegin.get())
+        );
+      } else {
+        criteria = criteria.andOperator(Criteria.where("time").gte(durationBegin.get()));
       }
-      criteria.andOperator(durationCriteria);
     }
     query.addCriteria(criteria);
     return query;
