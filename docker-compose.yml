@@ -1,8 +1,7 @@
-version: '3'
+version: '3.8'
 services:
   mongo:
     image: mongo:latest
-    hostname: mongo
     container_name: mongo
     restart: always
     ports:
@@ -11,12 +10,18 @@ services:
       MONGO_INITDB_ROOT_USERNAME: "root"
       MONGO_INITDB_ROOT_PASSWORD: "secret"
       MONGO_INITDB_DATABASE: "ouvadb"
+    # https://stackoverflow.com/a/54384377
+    healthcheck:
+      test: echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u root -p secret --quiet | grep 1
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     command:
       --sslMode=disabled
 
   zookeeper:
     image: confluentinc/cp-zookeeper:6.0.0
-    hostname: zookeeper
     container_name: zookeeper
     restart: always
     ports:
@@ -27,7 +32,6 @@ services:
 
   broker:
     image: confluentinc/cp-kafka:6.0.0
-    hostname: broker
     container_name: broker
     depends_on:
       - zookeeper
@@ -39,17 +43,31 @@ services:
       KAFKA_BROKER_ID: "1"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://broker:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_JMX_PORT: 9101
-      KAFKA_JMX_HOSTNAME: localhost
+
+  # This "container" is a workaround to pre-create topics
+  # https://github.com/confluentinc/examples/blob/5.1.1-post/microservices-orders/docker-compose.yml#L182-L215
+  kafka-setup:
+    image: confluentinc/cp-kafka:6.0.0
+    hostname: kafka-setup
+    container_name: kafka-setup
+    depends_on:
+      - broker
+    command: "bash -c 'echo Waiting for Kafka to be ready... && \
+                       cub kafka-ready -b broker:9092 1 20 && \
+                       kafka-topics --create --if-not-exists --zookeeper zookeeper:2181 --partitions 3 --replication-factor 1 --topic heartbeat'"
+    environment:
+      # The following settings are listed here only to satisfy the image's requirements.
+      # We override the image's `command` anyways, hence this container will not start a broker.
+      KAFKA_BROKER_ID: ignored
+      KAFKA_ZOOKEEPER_CONNECT: ignored
 
   kafdrop:
     image: obsidiandynamics/kafdrop:3.26.0
-    hostname: kafdrop
     container_name: kafdrop
     depends_on:
       - broker
@@ -60,16 +78,22 @@ services:
       JVM_OPTS: "-Xms32M -Xmx100M"
       SERVER_SERVLET_CONTEXTPATH: "/"
 
-  mongo-express:
-    image: "mongo-express:latest"
-    hostname: mongo-express
-    container_name: mongo-express
+  kafka-consumer:
+    build: kafka-consumer/
+    image: kafka-consumer
+    container_name: kafka-consumer
     depends_on:
       - mongo
+      - broker
+    restart: always
     ports:
-      - "8081:8081"
-    environment:
-      ME_CONFIG_MONGODB_SERVER: mongo
-      ME_CONFIG_MONGODB_PORT: "27017"
-      ME_CONFIG_MONGODB_ADMINUSERNAME: "root"
-      ME_CONFIG_MONGODB_ADMINPASSWORD: "secret"
+      - "8080:8080"
+
+  kafka-publisher:
+    image: repo.internal.ouva.co/repository/docker-public/ouva-mock-data:latest
+    container_name: kafka-publisher
+    depends_on:
+      - broker
+      - kafka-consumer
+    restart: always
+    command: --kafka.bootstrap_servers broker:9092
