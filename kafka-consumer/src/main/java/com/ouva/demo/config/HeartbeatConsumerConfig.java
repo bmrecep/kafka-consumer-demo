@@ -21,10 +21,10 @@ public class HeartbeatConsumerConfig {
   @Value("${spring.kafka.consumer.topic}")
   private String topic;
 
-  @Value("${spring.kafka.listener.concurrency}")
+  @Value("${spring.kafka.listener.concurrency:3}")
   private Integer concurrency;
 
-  @Value("${spring.kafka.consumer.partition:1}")
+  @Value("${spring.kafka.consumer.partition:3}")
   private Integer partition;
 
   /**
